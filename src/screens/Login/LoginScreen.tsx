@@ -16,12 +16,13 @@ export default function LoginScreen({ navigation }) {
                 Alert.alert("Sucesso", "Login realizado com sucesso!");
                 navigation.reset({
                     index: 0,
-                    routes: [{ name: 'HomeScreen' }],
+                    routes: [{ name: 'Home' }],
                 });
             } else {
                 Alert.alert("Erro", "Credenciais inválidas ou problema de conexão.");
             }
         } catch (error) {
+            console.log(error)
             Alert.alert("Erro", "Ocorreu um erro ao tentar fazer login.");
         } finally {
             setLoading(false);
