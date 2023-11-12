@@ -1,69 +1,88 @@
 import axios from 'axios';
-// @ts-ignore
-import { API_URL } from '@env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// Supondo que você já tenha configurado seu arquivo .env e esteja usando react-native-dotenv
+import { API_URL } from '@env';
 
+// Cria uma instância do Axios com a URL base da API e configuração do interceptador
+const api = axios.create({
+    baseURL: API_URL,
+});
 
+// Interceptor de requisição para incluir o token JWT automaticamente
+api.interceptors.request.use(async (config) => {
+    const token = await AsyncStorage.getItem('userToken');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    console.log(token)
+    return config;
+}, (error) => {
+    console.log(error)
+    return Promise.reject(error);
+});
 
-const API_URL_LOCAL = `${API_URL}/users`;
+// Utilitário para lidar com erros de API e lançar uma exceção
+const handleError = (error) => {
+    console.error('API call error:', error.response?.data || error.message);
+    throw error;
+};
 
 export const createUser = async (userData) => {
-    console.log(userData)
     try {
-        const response = await axios.post(API_URL_LOCAL, userData);
+        const response = await api.post('/users', userData);
         return response.data;
     } catch (error) {
-        console.error(error);
+        handleError(error);
     }
 };
 
 export const getAllUsers = async () => {
     try {
-        const response = await axios.get(API_URL_LOCAL);
+        const response = await api.get('/users');
         return response.data;
     } catch (error) {
-        console.error(error);
+        handleError(error);
     }
 };
 
 export const getUserById = async (id) => {
     try {
-        const response = await axios.get(`${API_URL_LOCAL}/${id}`);
+        const response = await api.get(`/users/${id}`);
         return response.data;
     } catch (error) {
-        console.error(error);
+        handleError(error);
     }
 };
 
 export const updateUser = async (id, userData) => {
     try {
-        const response = await axios.put(`${API_URL_LOCAL}/${id}`, userData);
+        const response = await api.put(`/users/${id}`, userData);
         return response.data;
     } catch (error) {
-        console.error(error);
+        handleError(error);
     }
 };
 
 export const deleteUser = async (id) => {
     try {
-        await axios.delete(`${API_URL_LOCAL}/${id}`);
+        await api.delete(`/users/${id}`);
     } catch (error) {
-        console.error(error);
+        handleError(error);
     }
 };
 
 export const loginUser = async (credentials) => {
     try {
-        // Ajuste a URL para incluir o caminho do endpoint de login
-        const response = await axios.post(`${API_URL}/auth/login`, credentials);
-        if (response.data.access_token) {
-            // Salva o token no armazenamento do dispositivo
-            await AsyncStorage.setItem('userToken', response.data.access_token);
-            return response.data.access_token;
+        const response = await api.post('/auth/login', credentials);
+        const { access_token } = response.data;
+        if (access_token) {
+            await AsyncStorage.setItem('userToken', access_token);
+            return access_token;
+        } else {
+            throw new Error('Token não recebido');
         }
     } catch (error) {
-        console.error(error);
-        throw error;
+        handleError(error);
     }
 };

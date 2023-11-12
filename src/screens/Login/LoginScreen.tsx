@@ -9,26 +9,30 @@ export default function LoginScreen({ navigation }) {
     const [loading, setLoading] = useState(false);
 
     const handleLogin = async () => {
+        if (!email || !senha) {
+            Alert.alert("Erro", "Por favor, preencha todos os campos.");
+            return;
+        }
+
         setLoading(true);
         try {
             const result = await loginUser({ email, senha });
-            if (result) {
+            if (result.error) {
+                Alert.alert("Erro", result.error);
+            } else {
                 Alert.alert("Sucesso", "Login realizado com sucesso!");
                 navigation.reset({
                     index: 0,
                     routes: [{ name: 'Home' }],
                 });
-            } else {
-                Alert.alert("Erro", "Credenciais inválidas ou problema de conexão.");
             }
         } catch (error) {
-            console.log(error)
-            Alert.alert("Erro", "Ocorreu um erro ao tentar fazer login.");
+            const errorMessage = error?.response?.data?.message || "Ocorreu um erro desconhecido.";
+            Alert.alert("Erro", errorMessage);
         } finally {
             setLoading(false);
         }
     };
-
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
